@@ -24,7 +24,8 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "true",
-    "last_opened_file_path": "Z:/Repo/Neon"
+    "last_opened_file_path": "Z:/Repo/EDUCAT-main",
+    "nodejs_package_manager_path": "npm"
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
@@ -35,7 +36,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1670423499258</updated>
-      <workItem from="1670423502216" duration="150000" />
+      <workItem from="1670423502216" duration="3967000" />
     </task>
     <servers />
   </component>
