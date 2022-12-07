@@ -9,20 +9,23 @@ In this paper, We propose a two-phase framework **NEON** to help large PLMs gene
 <p align = "center">
 <img src="img/framework.png" width="50%" alt="" align=center />
 </p>
+<p align = "center">
+Figure 1: The framework of Neon.
+</p>
 
 ## Main Results
 <p align = "center">
 <img src="img/results.png" width="80%" alt="" align=center />
 </p>
 <p align = "center">
-Automatic evaluation results.
+Table 1: Automatic evaluation results.
 </p>
 
 <p align = "center">
 <img src="img/manual.png" width="40%" alt="" align=center />
 </p>
 <p align = "center">
-Human evaluation results.
+Table 2: Human evaluation results.
 </p>
 
 ## Dependencies
