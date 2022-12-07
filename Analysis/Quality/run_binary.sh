@@ -1,0 +1,12 @@
+CUDA_VISIBLE_DEVICES=3,4,5,6,7 python run_binary.py \
+  --model_name_or_path ./models/comve \
+  --train_file binary_train.csv \
+  --validation_file binary_dev.csv \
+  --test_file binary_extended.csv \
+  --do_eval \
+  --do_predict \
+  --max_seq_length 128 \
+  --per_device_train_batch_size 32 \
+  --learning_rate 1e-5 \
+  --num_train_epochs 40 \
+  --output_dir ./models/comve/ \

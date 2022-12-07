@@ -1,0 +1,10 @@
+python3 comve_opt.py -o results/opt175_num1.json -i ../data/ComVE/test_extended.csv -n 1
+python3 comve_opt.py -o results/opt175_num2.json -i ../data/ComVE/test_extended.csv -n 2
+python3 comve_opt.py -o results/opt175_num3.json -i ../data/ComVE/test_extended.csv -n 3
+python3 comve_opt.py -o results/opt175_num4.json -i ../data/ComVE/test_extended.csv -n 4
+python3 comve_opt.py -o results/opt175_num5.json -i ../data/ComVE/test_extended.csv -n 5
+python3 comve_opt.py -o results/opt175_num6.json -i ../data/ComVE/test_extended.csv -n 6
+python3 comve_opt.py -o results/opt175_num7.json -i ../data/ComVE/test_extended.csv -n 7
+python3 comve_opt.py -o results/opt175_num8.json -i ../data/ComVE/test_extended.csv -n 8
+python3 comve_opt.py -o results/opt175_num9.json -i ../data/ComVE/test_extended.csv -n 9
+python3 comve_opt.py -o results/opt175_num10.json -i ../data/ComVE/test_extended.csv -n 10
