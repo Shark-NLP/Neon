@@ -10,7 +10,7 @@ import subprocess
 import pseudo_multiproc_toolkit as pmp
 from config import config as cfg
 import os
-from eval_client import metrics
+# from eval_client import metrics
 
 
 def multirun(config):
@@ -57,9 +57,9 @@ def multirun(config):
     pmp.clean_multiproc_files(sliced_log_files)
     assert output_file == config.output_file
 
-    results = metrics.evaluate(config.output_file, config.data_path, ['bleu', 'entailscore', 'bertscore'])
-    output_json = metrics.assemble(config.output_file, config.data_path)
-    msg = f'Multi EduCat completed in {cjj.TimeClock(time.time() - st)}: {output_json}. Results: {results}'
+    # results = metrics.evaluate(config.output_file, config.data_path, ['bleu', 'entailscore', 'bertscore'])
+    # output_json = metrics.assemble(config.output_file, config.data_path)
+    msg = f'Multi EduCat completed in {cjj.TimeClock(time.time() - st)}: {output_file}.'
     print(msg)
     if config.lark:
         cjj.lark(msg)

@@ -46,7 +46,7 @@ class StaDist():
     #
     #     return importance
 
-    def perplexity_position_finder(self, original_tokens: list, normalize=False):
+    def perplexity_position_finder(self, gen_ending_token_ids:list, premise_id: list, input_id: list, normalize=False):
         """
         Return tokenized ending by RoBERTa & importance
         # This is important to maintain the tokenization coherence between GPT-2 & RoBERTa
@@ -54,10 +54,10 @@ class StaDist():
         """
 
         compare_prob = []
-        init_prob = self.bert_scorer.sent_score(original_tokens, ppl=True)
-        for idx in range(len(original_tokens)):
-            new_tokens = deepcopy(original_tokens)
-            new_tokens[idx] = self.tokenizer_bert.mask_token_id
+        init_prob = self.bert_scorer.sent_score(input_id, ppl=True)
+        for idx in range(len(gen_ending_token_ids)):
+            new_tokens = deepcopy(input_id)
+            new_tokens[len(premise_id) + idx] = self.tokenizer_bert.mask_token_id
             count_prob = self.bert_scorer.sent_score(new_tokens, ppl=True)
             compare_prob.append(init_prob / count_prob)
 

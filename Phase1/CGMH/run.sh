@@ -1,1 +1,2 @@
-python3 counterfactual_rewrite.py --data_path ../data/ComVE/test.csv --output_file ./results/comve_test_072901.txt --sample_time 100
+# python3 multi_educat.py --data_path ../zero_shot/data/e-SNLI/test.csv --output_file ./results/esnli_test_081001.txt --sample_time 50 -p 16
+python3 counterfactual_rewrite.py --data_path ../zero_shot/data/ComVE/test.csv --output_file ./results/comve_test.csv --sample_time 50

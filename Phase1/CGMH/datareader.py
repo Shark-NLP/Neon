@@ -14,7 +14,7 @@ from tqdm import tqdm
 class DataReader:
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
-        self.data = []
+        self.data = defaultdict(list)
         self.cnt = 0
 
     def tokenize(self, text):
@@ -30,14 +30,14 @@ class DataReader:
         if os.path.exists(file_or_example):
             with open(file_or_example, 'r', encoding='utf-8') as file:
                 lines = list(csv.reader(file))
-            lines = lines[1:]
+            lines = lines[1:501]
 
         for line in tqdm(lines):
-            self.cnt += 5
-            self._load(line[1])
+            self.cnt += 1
+            self._load(line)
 
-        # for k in self.data:
-        assert self.cnt == len(self.data)
+        for k in self.data:
+            assert self.cnt == len(self.data[k]), k
 
     def _load(self, example):
         '''
@@ -45,10 +45,13 @@ class DataReader:
         :param example: {k: v, k: v}
         :return: {k: [{}], 'original_ending': [[{}, {}, {}], []]}
         '''
-        text = example.strip()
-        token_id, bert_tokenized = self.tokenize(text)
-        for i in range(5):
-            self.data.append({
+        for k in ['premise', 'contradiction']:
+            if k == 'premise':
+                text = example[0].strip()
+            else:
+                text = example[2].strip()
+            token_id, bert_tokenized = self.tokenize(text)
+            self.data[k].append({
                 'token_ids': np.array(token_id),
                 'text': bert_tokenized
             })

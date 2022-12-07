@@ -14,7 +14,7 @@ def config():
     parser.add_argument('--sample_time', type=int, default=100)
     parser.add_argument('--step_size', type=int, default=1)
     parser.add_argument('--search_size', type=int, default=100, help='Number of proposed tokens in mlm')
-    parser.add_argument('--threshold', type=float, default=0.1)
+    parser.add_argument('--threshold', type=float, default=1)
     # parser.add_argument('--coherence_type', '-c', choices=['lm', 'ents', 'null'], default='null')
 
     parser.add_argument('--causal_token_finding', action='store_true', help='Conflict detection')
@@ -28,14 +28,11 @@ def config():
     parser.add_argument('--action_prob', nargs='+', type=float, default=[0.70, 0.20, 0.10],
                         help='replace, insert and delete')
     parser.add_argument('--seed', type=int, default=1111)
-    parser.add_argument('--mlm_path', type=str, default='../models/roberta-base/',
+    parser.add_argument('--mlm_path', type=str, default='../models/roberta-large/',
                         help='Currently support RoBERTa for tokenization consistency with GPT2')
     parser.add_argument('--constraint_model_path', type=str,
                         help='Path to BERT or fine-tuned BERT or EntScore')
-    parser.add_argument('--gpt2_path', type=str, default='../models/gpt2-large/')
-
-    # parser.add_argument('--top_k', type=int, default=1)
-    parser.add_argument('--tf_idf', action='store_true', help='tf_idf score')
+    parser.add_argument('--gpt2_path', type=str, default='../gpt2-large/')
 
     parser.add_argument('--lark', action='store_true')
     args = parser.parse_args()

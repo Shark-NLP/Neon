@@ -14,7 +14,7 @@ from config import config as cfg
 from utils import sample_from_dist, normalize, just_acc, mask_sentence, annealing
 from plm_scorer import BERT_Scorer
 from stationary import StaDist
-from eval_client.metrics import evaluate
+# from eval_client.metrics import evaluate
 import traceback
 import Levenshtein
 
@@ -59,34 +59,33 @@ class EduCat():
         fw = open(output_file, 'w', encoding="utf-8")
         writer = csv.writer(fw)
         for sen_id in range(len(self.dataset)):
-            false_sent = self.dataset.data[sen_id]
+            premise = self.dataset.data['premise'][sen_id]
+            contradiction = self.dataset.data['contradiction'][sen_id]
 
-            # for i, ending in enumerate(self.dataset.data['original_ending'][sen_id]):
-            # sampled_ending, prob = self.sample_educat(sen_id, false_sent)
-            # _, text = self.dataset.tokenize(sampled_ending)
-            # text = text[len(premise['text']) + len(counterfactual['text']) + len(prev_edited_endings['text']):]
-            # gen_ending = {
-            #     'text': text,
-            #     'token_ids': self.tokenizer.encode(text, add_special_tokens=False)
-            # }
-            outputs = self.sample_educat(sen_id, false_sent)
-            res = [false_sent['text']]
-            # res = {"original": false_sent['text'], "edited": []}
+            res = []
+            outputs_all = []
+            for i in range(5):
+                outputs = self.sample_educat(sen_id, premise, contradiction)
+                outputs_all += outputs
+                # res = [false_sent['text']]
+            outputs_all = sorted(outputs_all, key=lambda x: x['new_prob'], reverse=True)[:5]
 
-            for output in outputs:
+            for output in outputs_all:
                 _, text = self.dataset.tokenize(output["sampled_text"])
                 generated_endings = text.strip()
+                # res.append(generated_endings)
                 res.append(generated_endings)
-                # res["edited"].append(generated_endings)
 
+            # res_all.append(res)
+            writer.writerow(res)
             # prev_orig_endings = self.dataset.append_data(prev_orig_endings, sampled_ending)
             # prev_edited_endings = self.dataset.append_data(prev_edited_endings, gen_ending)
 
             # generated_endings = " ".join(generated_endings)
             # self.logger.warning(f'{sen_id} [final] {generated_endings}')
-            # json.dump(res, fw, indent=4, ensure_ascii=False)
-            writer.writerow(res)
-            # fw.write("\n")
+        # json.dump(res_all, fw, indent=4, ensure_ascii=False)
+        # writer.writerow(res)
+        # fw.write("\n")
 
         self.logger.warning(f'Accept rate: {round(len(self.accepted_samples) / len(self.all_samples), 6) * 100}%, '
                             f'{len(self.accepted_samples)}/{len(self.all_samples)} accepted.')
@@ -96,10 +95,11 @@ class EduCat():
         fw.close()
         print(f'EduCat completed: {output_file}')
 
-    def sample_educat(self, data_i, false_sent):
+    def sample_educat(self, data_i, premise, contradiction):
         '''
         :param data_i:
-        :param false_sent:
+        :param premise:
+        :param contradiction:
         :return:
         '''
         # fixed_prefix = premise['text'] + counterfactual['text'] + prev_edited_endings['text']  # with blank
@@ -108,9 +108,13 @@ class EduCat():
         # input_text = fixed_prefix + ending['text']
         # input_ids = fixed_token_ids + self.tokenizer.encode(ending['text'], add_special_tokens=False)
 
-        input_text = false_sent['text']  # with blank
+        fixed_prefix = premise['text']
+        fixed_token_ids = self.tokenizer.encode(fixed_prefix, add_special_tokens=False)
+        # input_text = false_sent['text']  # with blank
         # input_ids = false_sent['token_ids']
-        input_ids = self.tokenizer.encode(input_text, add_special_tokens=False)
+        input_text = fixed_prefix + contradiction['text']
+        input_ids = fixed_token_ids + self.tokenizer.encode(contradiction['text'], add_special_tokens=False)
+
         # pos_tag = nltk.pos_tag(input_ids)
         # print("input_text = ", input_text, "len= ", len(input_text))
         # print("input_ids = ", input_ids, "len= ", len(input_ids))
@@ -125,14 +129,15 @@ class EduCat():
         prev_inds = []
         outputs = []
         output_p = []  # output sentences
-        sequence_length = len(false_sent['token_ids'])
-        print("sequence_length= ", sequence_length)
-        print("input_length= ", len(input_ids))
+        sequence_length = len(contradiction['token_ids'])
+        # print("sequence_length= ", sequence_length)
+        # print("input_length= ", len(input_ids))
 
         for iter in range(self.sample_time):
+            gen_ending_token_ids = input_ids[len(fixed_token_ids):]
 
             # if self.causal_token_finding:
-            pos_set = self._find_position_causal(input_ids, prev_inds, input_text,
+            pos_set = self._find_position_causal(gen_ending_token_ids, prev_inds, fixed_token_ids, input_ids,
                                                      self.step_size)
             action_set = [sample_from_dist(self.action_prob, size=None) for i in range(len(pos_set))]
             # else:
@@ -148,7 +153,7 @@ class EduCat():
                     action_set[i] = sample_from_dist([0.8, 0.2], size=None)
 
             # add prefix: premise + counterfactual, which will not be edited.
-            # pos_set = [x + len(fixed_token_ids) for x in pos_set]
+            pos_set = [x + len(fixed_token_ids) for x in pos_set]
             masked_sent, adjusted_pos_set = mask_sentence(input_ids, pos_set, action_set,
                                                           self.tokenizer.mask_token_id)
             prev_inds = pos_set
@@ -162,7 +167,6 @@ class EduCat():
                 ind = adjusted_pos_set[step_i]
                 ind_old = pos_set[step_i]
                 action = action_set[step_i]
-
 
                 # Only compute sentence level score upon completing, in case step_size > 1.
                 if self.restrict_constr:
@@ -190,6 +194,7 @@ class EduCat():
             input_text_tmp = self.tokenizer.decode(input_ids_tmp)
             # ending_temp = input_text_tmp[len(fixed_prefix):]
             new_prob = self.stationary.fluency(input_text_tmp)
+            edited_text = self.tokenizer.decode(input_ids_tmp[len(fixed_token_ids):])
             # new_prob *= self.stationary.coherence_constraint(premise['text'],
             #                                                      initial['text'] + prev_orig_endings['text'],
             #                                                      counterfactual['text'] + prev_edited_endings['text'],
@@ -197,7 +202,7 @@ class EduCat():
 
             self.all_samples.append({
                 'original_text': input_text,
-                'sampled_text': input_text_tmp,
+                'sampled_text': edited_text,
                 'new_prob': new_prob
             })
 
@@ -230,7 +235,7 @@ class EduCat():
                     self.logger.warning(f'No.{data_i}: [accepted] {input_text_tmp}')
                     self.accepted_samples.append({
                         'original_text': input_text,
-                        'sampled_text': input_text_tmp,
+                        'sampled_text': edited_text,
                         'new_prob': new_prob
                     })
 
@@ -239,7 +244,7 @@ class EduCat():
                         rank_prob = new_prob
                         outputs.append({
                             'original_text': input_text,
-                            'sampled_text': input_text_tmp,
+                            'sampled_text': edited_text,
                             'new_prob': rank_prob
                         })
                     if outputs:
@@ -252,19 +257,19 @@ class EduCat():
         outputs_s = []
         for num in range(self.min_length, 0, -1):
             outputs_s = [x for x in outputs if len(x['sampled_text'].split()) >= num]
-            if len(outputs_s) >= 5:
-                break
+            # if len(outputs_s) >= 5:
+            #     break
         if not outputs_s:
             outputs_s = [{
                 'original_text': input_text,
                 'sampled_text': self.tokenizer.decode(input_ids),
                 'new_prob': 0.
             }]
-        for output in outputs_s:
-            dis = Levenshtein.distance(output["original_text"], output["sampled_text"])
-            if dis != 0:
-                output['new_prob'] /= (math.log(dis) + 1)
-        outputs_s = sorted(outputs_s, key=lambda x: x['new_prob'], reverse=True)[:5]  # rank samples after burn_in_time
+        # for output in outputs_s:
+            # dis = Levenshtein.distance(output["original_text"], output["sampled_text"])
+            # if dis != 0:
+            #     output['new_prob'] /= (math.log(dis) + 1)
+        # outputs_s = sorted(outputs_s, key=lambda x: x['new_prob'], reverse=True)  # rank samples after burn_in_time
         # return outputs_s[0]['sampled_text'], outputs_s[0]['new_prob']
         return outputs_s
 
@@ -402,9 +407,7 @@ class EduCat():
 
         assert search_size == len(tok_candidate), (search_size, len(tok_candidate))
 
-        print("input_ids= ", len(input_ids))
         input_candidate = np.array([input_ids] * search_size)
-        print("input_candidate= ", input_candidate.shape)
         for i in range(search_size):
             input_candidate[i][ind] = tok_candidate[i]
 
@@ -456,7 +459,7 @@ class EduCat():
         pos_set = sorted(pos_set, reverse=True)  # descending order, for avoiding conflicts
         return pos_set
 
-    def _find_position_causal(self, gen_ending_token_ids, prev_inds, input_text, step_size=1):
+    def _find_position_causal(self, gen_ending_token_ids, prev_inds, premise_id, input_id, step_size=1):
         seq_len = len(gen_ending_token_ids)
         candidates = []
         if step_size >= seq_len:
@@ -471,7 +474,7 @@ class EduCat():
             return [candidates[0]]
 
         # tokenized_ending = self.tokenizer.convert_ids_to_tokens(gen_ending_token_ids)
-        importance = self.stationary.perplexity_position_finder(gen_ending_token_ids, normalize=True)
+        importance = self.stationary.perplexity_position_finder(gen_ending_token_ids, premise_id, input_id, normalize=True)
 
         assert len(importance) == len(gen_ending_token_ids), (len(importance), len(gen_ending_token_ids))
         pos_set = sample_from_dist(importance, size=step_size, replace=False)
